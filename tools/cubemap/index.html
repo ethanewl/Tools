@@ -1,36 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Unity Cubemap Tool</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #0f1115; color: #eaeaea; padding: 20px; max-width: 1000px; margin: auto; }
-    .controls { background: #1a1d23; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    input, button { margin: 10px 5px; padding: 10px; border-radius: 4px; border: none; }
-    button { background: #3b82f6; color: white; cursor: pointer; font-weight: bold; }
-    button:hover { background: #2563eb; }
-    #output-container { margin-top: 20px; text-align: center; }
-    canvas { max-width: 100%; height: auto; border: 1px solid #444; margin-top: 10px; }
-    .status { color: #10b981; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Cubemap Studio</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Panorama → Unity Cubemap</h1>
-  
-  <div class="controls">
-    <input type="file" id="panoInput" accept="image/*">
-    <label>Resolution:</label>
-    <input type="number" id="resInput" value="1024" style="width: 80px;">
-    <button id="generateBtn">Generate Stitched Cross</button>
-    <a id="downloadLink" style="display:none;"><button style="background:#10b981">Download PNG</button></a>
-    <div id="statusLabel" class="status"></div>
-  </div>
+    <div class="container">
+        <h1>Stellar Cubemap Studio</h1>
+        <p>Convert 2:1 Equirectangular Panoramas into Unity-ready Cubemap crosses.</p>
 
-  <div id="output-container">
-    <h3 id="resultTitle" style="display:none;">Resulting Cubemap Cross</h3>
-    <div id="faces" style="display:none;"></div> <canvas id="crossCanvas"></canvas>
-  </div>
+        <div class="tool-card">
+            <div class="input-group">
+                <div>
+                    <label style="display:block; font-size: 0.8rem; color: #888;">FACE RESOLUTION</label>
+                    <input type="number" id="resInput" value="1024">
+                </div>
+                <button id="generateBtn">Process Batch</button>
+            </div>
 
-  <script src="cubemap.js"></script>
+            <div class="file-upload" onclick="document.getElementById('panoInput').click()">
+                <p>Click or drag images here</p>
+                <input type="file" id="panoInput" accept="image/*" multiple style="display:none">
+            </div>
+        </div>
+
+        <div id="results-list">
+            </div>
+    </div>
+
+    <script src="cubemap.js"></script>
 </body>
 </html>
