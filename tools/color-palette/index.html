@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Extractor</title>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --card: #1a1d23;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --text: #ececec;
+            --border: #333;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 900px; width: 100%; }
+        
+        h1 {
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #9ca3af;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .tool-card {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            margin-bottom: 24px;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+
+        .setting-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            font-size: 0.7rem;
+            color: #888;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05rem;
+            margin-bottom: 8px;
+        }
+
+        .input-box {
+            background: #0f1115;
+            border: 1px solid #444;
+            color: var(--accent);
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .file-upload {
+            border: 2px dashed #444;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(0,0,0,0.2);
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .file-upload:hover { 
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload.drag-over {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        #extractBtn {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #extractBtn:disabled {
+            opacity: 0.5;
+            cursor: wait;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Section */
+        #results {
+            display: none;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .color-card {
+            background: #0f1115;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .color-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .color-swatch {
+            height: 120px;
+            position: relative;
+        }
+
+        .percentage {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .color-info {
+            padding: 12px;
+        }
+
+        .color-codes {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .color-code {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        .code-label {
+            color: #888;
+            font-weight: 600;
+        }
+
+        .code-value {
+            font-family: 'Courier New', monospace;
+            color: var(--text);
+            background: rgba(0,0,0,0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .copy-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .copy-notification.show {
+            opacity: 1;
+        }
+
+        .export-section {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .export-btn {
+            flex: 1;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .export-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #444;
+            color: #888;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Color Palette Extractor</h1>
+    <p class="subtitle">Extract dominant colors from images for game & design references</p>
+
+    <div id="upload-section" class="tool-card">
+        <div class="settings-row">
+            <div class="setting-group">
+                <label>Number of Colors</label>
+                <input type="number" id="colorCount" value="6" min="2" max="12" class="input-box">
+            </div>
+            <div class="setting-group">
+                <label>Algorithm</label>
+                <select id="algorithm" class="input-box">
+                    <option value="kmeans">K-Means Clustering</option>
+                    <option value="median">Median Cut</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="file-upload" id="fileUpload">
+            <div class="upload-icon">🎨</div>
+            <div>
+                <span style="color: var(--accent); font-weight: bold;">Select an Image</span> or drag & drop
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display:none">
+            <div id="fileName" style="font-size: 0.75rem; color: #666; margin-top: 8px;">No file selected</div>
+        </div>
+
+        <button id="extractBtn">
+            <div class="spinner" id="loader"></div>
+            <span id="btnText">Extract Palette</span>
+        </button>
+    </div>
+
+    <div id="results">
+        <button class="back-btn" id="backBtn">← Extract Another Image</button>
+        
+        <div class="tool-card">
+            <img id="previewImage" class="image-preview">
+            
+            <div class="palette-grid" id="paletteGrid"></div>
+
+            <div class="export-section">
+                <button class="export-btn" id="exportJSON">Export as JSON</button>
+                <button class="export-btn" id="exportCSS">Export as CSS</button>
+                <button class="export-btn" id="exportASE">Copy HEX Array</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="copy-notification" id="copyNotification">Copied to clipboard!</div>
+
+<script>
+let currentPalette = [];
+let currentImageURL = null;
+
+const fileUpload = document.getElementById('fileUpload');
+const imageInput = document.getElementById('imageInput');
+const extractBtn = document.getElementById('extractBtn');
+const uploadSection = document.getElementById('upload-section');
+const resultsSection = document.getElementById('results');
+const paletteGrid = document.getElementById('paletteGrid');
+const previewImage = document.getElementById('previewImage');
+
+// Drag & Drop
+fileUpload.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileUpload.classList.add('drag-over');
+});
+
+fileUpload.addEventListener('dragleave', () => {
+    fileUpload.classList.remove('drag-over');
+});
+
+fileUpload.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileUpload.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        imageInput.files = e.dataTransfer.files;
+        document.getElementById('fileName').textContent = file.name;
+    }
+});
+
+fileUpload.onclick = () => imageInput.click();
+
+imageInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('fileName').textContent = file.name;
+    }
+};
+
+// K-Means Clustering
+function kMeansColors(pixels, k, maxIterations = 20) {
+    // Initialize centroids randomly
+    let centroids = [];
+    for (let i = 0; i < k; i++) {
+        const idx = Math.floor(Math.random() * pixels.length);
+        centroids.push([...pixels[idx]]);
+    }
+
+    for (let iter = 0; iter < maxIterations; iter++) {
+        // Assign pixels to nearest centroid
+        const clusters = Array(k).fill(null).map(() => []);
+        
+        for (const pixel of pixels) {
+            let minDist = Infinity;
+            let clusterIdx = 0;
+            
+            for (let i = 0; i < k; i++) {
+                const dist = Math.pow(pixel[0] - centroids[i][0], 2) +
+                           Math.pow(pixel[1] - centroids[i][1], 2) +
+                           Math.pow(pixel[2] - centroids[i][2], 2);
+                if (dist < minDist) {
+                    minDist = dist;
+                    clusterIdx = i;
+                }
+            }
+            clusters[clusterIdx].push(pixel);
+        }
+
+        // Update centroids
+        let changed = false;
+        for (let i = 0; i < k; i++) {
+            if (clusters[i].length === 0) continue;
+            
+            const newCentroid = [
+                Math.round(clusters[i].reduce((sum, p) => sum + p[0], 0) / clusters[i].length),
+                Math.round(clusters[i].reduce((sum, p) => sum + p[1], 0) / clusters[i].length),
+                Math.round(clusters[i].reduce((sum, p) => sum + p[2], 0) / clusters[i].length)
+            ];
+            
+            if (newCentroid[0] !== centroids[i][0] || 
+                newCentroid[1] !== centroids[i][1] || 
+                newCentroid[2] !== centroids[i][2]) {
+                changed = true;
+                centroids[i] = newCentroid;
+            }
+        }
+        
+        if (!changed) break;
+    }
+
+    // Calculate percentages
+    const total = pixels.length;
+    const clusterSizes = Array(k).fill(0);
+    
+    for (const pixel of pixels) {
+        let minDist = Infinity;
+        let clusterIdx = 0;
+        
+        for (let i = 0; i < k; i++) {
+            const dist = Math.pow(pixel[0] - centroids[i][0], 2) +
+                       Math.pow(pixel[1] - centroids[i][1], 2) +
+                       Math.pow(pixel[2] - centroids[i][2], 2);
+            if (dist < minDist) {
+                minDist = dist;
+                clusterIdx = i;
+            }
+        }
+        clusterSizes[clusterIdx]++;
+    }
+
+    return centroids.map((color, i) => ({
+        rgb: color,
+        percentage: (clusterSizes[i] / total * 100).toFixed(1)
+    })).sort((a, b) => b.percentage - a.percentage);
+}
+
+// Median Cut Algorithm
+function medianCutColors(pixels, depth) {
+    if (depth === 0 || pixels.length === 0) {
+        const avg = [
+            Math.round(pixels.reduce((sum, p) => sum + p[0], 0) / pixels.length),
+            Math.round(pixels.reduce((sum, p) => sum + p[1], 0) / pixels.length),
+            Math.round(pixels.reduce((sum, p) => sum + p[2], 0) / pixels.length)
+        ];
+        return [{ rgb: avg, percentage: (pixels.length / pixels.length * 100).toFixed(1) }];
+    }
+
+    // Find channel with greatest range
+    const ranges = [0, 1, 2].map(i => {
+        const vals = pixels.map(p => p[i]);
+        return Math.max(...vals) - Math.min(...vals);
+    });
+    const channel = ranges.indexOf(Math.max(...ranges));
+
+    // Sort by channel and split
+    pixels.sort((a, b) => a[channel] - b[channel]);
+    const mid = Math.floor(pixels.length / 2);
+
+    return [
+        ...medianCutColors(pixels.slice(0, mid), depth - 1),
+        ...medianCutColors(pixels.slice(mid), depth - 1)
+    ];
+}
+
+// Extract colors
+async function extractColors(imageFile, numColors, algorithm) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(imageFile);
+        
+        img.onload = () => {
+            // Sample image
+            const canvas = document.createElement('canvas');
+            const maxDim = 400; // Downsample for performance
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = [];
+            
+            // Sample pixels (skip some for performance)
+            for (let i = 0; i < imageData.data.length; i += 16) {
+                const r = imageData.data[i];
+                const g = imageData.data[i + 1];
+                const b = imageData.data[i + 2];
+                const a = imageData.data[i + 3];
+                
+                if (a > 128) { // Skip transparent pixels
+                    pixels.push([r, g, b]);
+                }
+            }
+            
+            let colors;
+            if (algorithm === 'kmeans') {
+                colors = kMeansColors(pixels, numColors);
+            } else {
+                const depth = Math.ceil(Math.log2(numColors));
+                colors = medianCutColors(pixels, depth).slice(0, numColors);
+            }
+            
+            URL.revokeObjectURL(url);
+            resolve(colors);
+        };
+        
+        img.src = url;
+    });
+}
+
+// Color format converters
+function rgbToHex(rgb) {
+    return '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+function rgbToHsl(rgb) {
+    const r = rgb[0] / 255;
+    const g = rgb[1] / 255;
+    const b = rgb[2] / 255;
+    
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    
+    if (max === min) {
+        h = s = 0;
+    } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+        }
+    }
+    
+    return [
+        Math.round(h * 360),
+        Math.round(s * 100),
+        Math.round(l * 100)
+    ];
+}
+
+// Copy to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const notification = document.getElementById('copyNotification');
+        notification.classList.add('show');
+        setTimeout(() => notification.classList.remove('show'), 2000);
+    });
+}
+
+// Render palette
+function renderPalette(colors) {
+    paletteGrid.innerHTML = '';
+    currentPalette = colors;
+    
+    colors.forEach(color => {
+        const hex = rgbToHex(color.rgb);
+        const hsl = rgbToHsl(color.rgb);
+        
+        const card = document.createElement('div');
+        card.className = 'color-card';
+        card.onclick = () => copyToClipboard(hex);
+        
+        card.innerHTML = `
+            <div class="color-swatch" style="background: ${hex}">
+                <div class="percentage">${color.percentage}%</div>
+            </div>
+            <div class="color-info">
+                <div class="color-codes">
+                    <div class="color-code">
+                        <span class="code-label">HEX</span>
+                        <span class="code-value">${hex}</span>
+                    </div>
+                    <div class="color-code">
+                        <span class="code-label">RGB</span>
+                        <span class="code-value">${color.rgb.join(', ')}</span>
+                    </div>
+                    <div class="color-code">
+                        <span class="code-label">HSL</span>
+                        <span class="code-value">${hsl[0]}°, ${hsl[1]}%, ${hsl[2]}%</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        paletteGrid.appendChild(card);
+    });
+}
+
+// Extract button
+extractBtn.onclick = async () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+    
+    const numColors = parseInt(document.getElementById('colorCount').value);
+    const algorithm = document.getElementById('algorithm').value;
+    
+    extractBtn.disabled = true;
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('btnText').textContent = 'Analyzing...';
+    
+    try {
+        const colors = await extractColors(file, numColors, algorithm);
+        
+        // Clean up old image URL
+        if (currentImageURL) {
+            URL.revokeObjectURL(currentImageURL);
+        }
+        
+        currentImageURL = URL.createObjectURL(file);
+        previewImage.src = currentImageURL;
+        
+        renderPalette(colors);
+        
+        uploadSection.style.display = 'none';
+        resultsSection.style.display = 'block';
+    } catch (error) {
+        alert('Error processing image: ' + error.message);
+    } finally {
+        extractBtn.disabled = false;
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('btnText').textContent = 'Extract Palette';
+    }
+};
+
+// Back button
+document.getElementById('backBtn').onclick = () => {
+    uploadSection.style.display = 'block';
+    resultsSection.style.display = 'none';
+    if (currentImageURL) {
+        URL.revokeObjectURL(currentImageURL);
+        currentImageURL = null;
+    }
+};
+
+// Export functions
+document.getElementById('exportJSON').onclick = () => {
+    const data = currentPalette.map(c => ({
+        hex: rgbToHex(c.rgb),
+        rgb: c.rgb,
+        hsl: rgbToHsl(c.rgb),
+        percentage: parseFloat(c.percentage)
+    }));
+    
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'palette.json';
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+document.getElementById('exportCSS').onclick = () => {
+    let css = ':root {\n';
+    currentPalette.forEach((c, i) => {
+        css += `  --color-${i + 1}: ${rgbToHex(c.rgb)};\n`;
+    });
+    css += '}';
+    
+    copyToClipboard(css);
+};
+
+document.getElementById('exportASE').onclick = () => {
+    const hexArray = currentPalette.map(c => rgbToHex(c.rgb)).join(', ');
+    copyToClipboard(`[${hexArray}]`);
+};
+
+// Cleanup
+window.addEventListener('beforeunload', () => {
+    if (currentImageURL) {
+        URL.revokeObjectURL(currentImageURL);
+    }
+});
+</script>
+
+</body>
+</html>
