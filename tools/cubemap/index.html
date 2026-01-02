@@ -1,10 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Cubemap Tool</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f1115;
+      color: #eaeaea;
+      padding: 30px;
+    }
+    input, button {
+      margin: 8px 0;
+      padding: 6px;
+    }
+    canvas {
+      display: block;
+      margin-top: 20px;
+      border: 1px solid #333;
+    }
+  </style>
 </head>
 <body>
-  <h1>Cubemap Tool</h1>
-  <p>If you see this, folder routing works.</p>
-</body>
-</html>
+
+  <h1>Panorama → Cubemap</h1>
+
+  <input type="file" id="panoInput" accept="image/*"><br>
+  <label>Face resolution:</label>
+  <input type="number" id="resInput" value="512"><br>
+
+  <button id="generateBtn">Generate +X Face</button>
+
+  <canvas id="previe
