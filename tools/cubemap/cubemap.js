@@ -1,43 +1,16 @@
 const facesOrder = ["posx", "negx", "posy", "negy", "posz", "negz"];
 
-// -------------------------
-// Math
-// -------------------------
-
 function directionToUV(x, y, z) {
   const theta = Math.atan2(z, x);
   const phi = Math.asin(y);
-  return [
-    theta / (2 * Math.PI) + 0.5,
-    0.5 - phi / Math.PI
-  ];
+  return [theta / (2 * Math.PI) + 0.5, 0.5 - phi / Math.PI];
 }
 
-// -------------------------
-// Face generation
-// -------------------------
-
 function generateFace(panoData, pw, ph, size, face) {
-  // 1. Create the element
-  const faceCanvas = document.createElement("canvas");
-  
-  // 2. Safety Check: Ensure canvas exists
-  if (!faceCanvas) {
-    console.error("Canvas creation failed");
-    return null;
-  }
-
-  // 3. Set dimensions individually
-  faceCanvas.width = size;
-  faceCanvas.height = size;
-
-  const ctx = faceCanvas.getContext("2d");
-  if (!ctx) {
-    console.error("Could not get 2D context");
-    return null;
-  }
-
-  const imgData = ctx.createImageData(size, size);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const img = ctx.createImageData(size, size);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -53,84 +26,68 @@ function generateFace(panoData, pw, ph, size, face) {
       if (face === "negz") [dx, dy, dz] = [-a, -b, -1];
 
       const len = Math.hypot(dx, dy, dz);
-      dx /= len; dy /= len; dz /= len;
-
-      const [u, v] = directionToUV(dx, dy, dz);
+      const [u, v] = directionToUV(dx/len, dy/len, dz/len);
 
       const px = Math.max(0, Math.min(pw - 1, Math.floor(u * pw)));
       const py = Math.max(0, Math.min(ph - 1, Math.floor(v * ph)));
       const panoIndex = (py * pw + px) * 4;
 
       const i = (y * size + x) * 4;
-      imgData.data[i]     = panoData[panoIndex];
-      imgData.data[i + 1] = panoData[panoIndex + 1];
-      imgData.data[i + 2] = panoData[panoIndex + 2];
-      imgData.data[i + 3] = 255;
+      img.data[i]     = panoData[panoIndex];
+      img.data[i + 1] = panoData[panoIndex + 1];
+      img.data[i + 2] = panoData[panoIndex + 2];
+      img.data[i + 3] = 255;
     }
   }
-
-  ctx.putImageData(imgData, 0, 0);
-  return faceCanvas;
+  ctx.putImageData(img, 0, 0);
+  return canvas;
 }
-
-// -------------------------
-// UI hook
-// -------------------------
 
 document.getElementById("generateBtn").onclick = () => {
   const fileInput = document.getElementById("panoInput");
-  const resInput = document.getElementById("resInput");
-  const facesDiv = document.getElementById("faces");
+  const size = parseInt(document.getElementById("resInput").value);
+  const status = document.getElementById("statusLabel");
+  const crossCanvas = document.getElementById("crossCanvas");
+  const downloadLink = document.getElementById("downloadLink");
 
-  if (!fileInput.files.length) {
-    alert("Select a panorama image");
-    return;
-  }
+  if (!fileInput.files[0]) return alert("Select an image");
 
-  const size = parseInt(resInput.value);
-  if (!size || size <= 0) {
-    alert("Invalid resolution");
-    return;
-  }
-
-  facesDiv.innerHTML = "";
-
+  status.textContent = "Processing... (This may take a moment)";
+  
   const img = new Image();
   img.onload = () => {
-    // Draw panorama to temp canvas
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = img.width;
     tempCanvas.height = img.height;
     const tempCtx = tempCanvas.getContext("2d");
     tempCtx.drawImage(img, 0, 0);
+    const panoData = tempCtx.getImageData(0, 0, img.width, img.height).data;
 
-    const panoData = tempCtx.getImageData(
-      0, 0, img.width, img.height
-    ).data;
-
-    // Generate faces
+    // Generate all 6 faces in memory
+    const faceCanvases = {};
     for (const face of facesOrder) {
-      const faceCanvas = generateFace(
-        panoData,
-        img.width,
-        img.height,
-        size,
-        face
-      );
-
-      const wrapper = document.createElement("div");
-      wrapper.style.textAlign = "center";
-
-      const label = document.createElement("div");
-      label.textContent = face;
-      label.style.marginBottom = "4px";
-      label.style.fontWeight = "bold";
-
-      wrapper.appendChild(label);
-      wrapper.appendChild(faceCanvas);
-      facesDiv.appendChild(wrapper);
+      faceCanvases[face] = generateFace(panoData, img.width, img.height, size, face);
     }
-  };
 
+    // Stitch into Cross (4w x 3h)
+    crossCanvas.width = size * 4;
+    crossCanvas.height = size * 3;
+    const ctx = crossCanvas.getContext("2d");
+
+    // Layout mapping (Replicating your Python stitch_cross)
+    ctx.drawImage(faceCanvases["posy"], size, 0);      // Top
+    ctx.drawImage(faceCanvases["negx"], 0, size);      // Left
+    ctx.drawImage(faceCanvases["posz"], size, size);   // Front
+    ctx.drawImage(faceCanvases["posx"], size * 2, size); // Right
+    ctx.drawImage(faceCanvases["negz"], size * 3, size); // Back
+    ctx.drawImage(faceCanvases["negy"], size, size * 2); // Bottom
+
+    // Setup Download
+    status.textContent = "Done! ✔";
+    document.getElementById("resultTitle").style.display = "block";
+    downloadLink.style.display = "inline-block";
+    downloadLink.href = crossCanvas.toDataURL("image/png");
+    downloadLink.download = "cubemap_cross.png";
+  };
   img.src = URL.createObjectURL(fileInput.files[0]);
 };
