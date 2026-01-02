@@ -2,36 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ethan – 3D Tools</title>
   <style>
+    :root {
+      --bg: #0f1115;
+      --card: #1a1d23;
+      --accent: #3b82f6;
+      --text: #ececec;
+      --text-dim: #9ca3af;
+      --border: #333;
+    }
+
     body {
-      font-family: system-ui, sans-serif;
-      background: #0f1115;
-      color: #eaeaea;
-      padding: 40px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 80px 20px;
+      margin: 0;
     }
-    a {
-      color: #6cf;
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.05rem;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 1.1rem;
+    }
+
+    /* Tools Grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .tool-card {
+      background: var(--card);
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tool-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Subtle glow effect on hover */
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tool-card:hover::before {
+      opacity: 1;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin: 0 0 12px 0;
+      font-weight: 700;
+    }
+
+    p {
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin: 0 0 24px 0;
+    }
+
+    .btn {
+      margin-top: auto;
+      display: inline-flex;
+      align-items: center;
+      color: var(--accent);
+      font-weight: 600;
       text-decoration: none;
-      font-size: 18px;
+      transition: gap 0.2s;
     }
-    .tool {
-      margin-top: 20px;
-      padding: 16px;
-      border: 1px solid #333;
-      border-radius: 8px;
-      max-width: 400px;
+
+    .btn:hover {
+      gap: 8px;
+    }
+
+    .btn::after {
+      content: '→';
+      margin-left: 4px;
     }
   </style>
 </head>
 <body>
-  <h1>3D Tools</h1>
-  <p>Browser-based tools by Ethan</p>
 
-  <div class="tool">
-    <h2>Cubemap Tool</h2>
-    <p>Panorama → Unity cubemap</p>
-    <a href="tools/cubemap/">Open Tool →</a>
+  <div class="header">
+    <h1>3D Tools</h1>
+    <p class="subtitle">High-performance browser utilities by Ethan</p>
   </div>
+
+  <div class="tools-grid">
+    <div class="tool-card">
+      <h2>Stellar Cubemap Studio</h2>
+      <p>Convert 2:1 equirectangular panoramas into Unity-ready horizontal cross cubemaps or individual faces.</p>
+      <a href="tools/cubemap/" class="btn">Open Tool</a>
+    </div>
+
+    </div>
+
 </body>
 </html>
