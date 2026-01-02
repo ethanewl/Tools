@@ -1,3 +1,5 @@
+const facesOrder = ["posx", "negx", "posy", "negy", "posz", "negz"];
+
 function directionToUV(x, y, z) {
   const theta = Math.atan2(z, x);
   const phi = Math.asin(y);
@@ -8,25 +10,28 @@ function directionToUV(x, y, z) {
 }
 
 function generateFace(panoData, pw, ph, size, face) {
-  const canvas = document.getElementById("preview");
+  const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext("2d");
   const img = ctx.createImageData(size, size);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-
       const a = 2 * (x + 0.5) / size - 1;
       const b = 2 * (y + 0.5) / size - 1;
 
       let dx, dy, dz;
       if (face === "posx") [dx, dy, dz] = [1, -b, -a];
+      if (face === "negx") [dx, dy, dz] = [-1, -b, a];
+      if (face === "posy") [dx, dy, dz] = [a, 1, b];
+      if (face === "negy") [dx, dy, dz] = [a, -1, -b];
+      if (face === "posz") [dx, dy, dz] = [a, -b, 1];
+      if (face === "negz") [dx, dy, dz] = [-a, -b, -1];
 
       const l = Math.hypot(dx, dy, dz);
       dx /= l; dy /= l; dz /= l;
 
       const [u, v] = directionToUV(dx, dy, dz);
-
       const px = Math.floor(u * (pw - 1));
       const py = Math.floor(v * (ph - 1));
       const pi = (py * pw + px) * 4;
@@ -40,6 +45,7 @@ function generateFace(panoData, pw, ph, size, face) {
   }
 
   ctx.putImageData(img, 0, 0);
+  return canvas;
 }
 
 document.getElementById("generateBtn").onclick = () => {
@@ -47,6 +53,8 @@ document.getElementById("generateBtn").onclick = () => {
   if (!file) return alert("Select a panorama");
 
   const size = parseInt(document.getElementById("resInput").value);
+  const facesDiv = document.getElementById("faces");
+  facesDiv.innerHTML = "";
 
   const img = new Image();
   img.onload = () => {
@@ -57,7 +65,16 @@ document.getElementById("generateBtn").onclick = () => {
     ctx.drawImage(img, 0, 0);
 
     const data = ctx.getImageData(0, 0, img.width, img.height).data;
-    generateFace(data, img.width, img.height, size, "posx");
+
+    for (const face of facesOrder) {
+      const faceCanvas = generateFace(data, img.width, img.height, size, face);
+      const label = document.createElement("div");
+      label.style.textAlign = "center";
+      label.innerHTML = `<strong>${face}</strong>`;
+      label.appendChild(faceCanvas);
+      facesDiv.appendChild(label);
+    }
   };
+
   img.src = URL.createObjectURL(file);
 };
