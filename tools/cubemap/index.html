@@ -48,9 +48,19 @@
 
         label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05rem; }
 
-        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+        .res-input-wrapper { display: flex; align-items: center; gap: 10px; }
         
-        .res-display { font-weight: bold; color: var(--accent); font-size: 1.1rem; }
+        input[type="number"] {
+            background: #0f1115;
+            border: 1px solid #444;
+            color: var(--accent);
+            padding: 10px;
+            border-radius: 8px;
+            width: 100px;
+            font-weight: bold;
+            font-size: 1rem;
+            outline: none;
+        }
 
         .checkbox-group {
             display: flex;
@@ -59,6 +69,7 @@
             font-size: 0.9rem;
             cursor: pointer;
             user-select: none;
+            height: 42px;
         }
 
         #generateBtn {
@@ -78,9 +89,9 @@
             gap: 10px;
         }
 
+        #generateBtn:hover { background: #2563eb; }
         #generateBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Loading Spinner */
         .spinner {
             width: 18px;
             height: 18px;
@@ -99,13 +110,14 @@
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
             background: rgba(0,0,0,0.2);
         }
 
-        .file-upload:hover { border-color: var(--accent); background: rgba(59, 130, 246, 0.05); }
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 10px; }
+        .clear-btn { background: transparent; border: 1px solid #444; color: #888; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }
+        .clear-btn:hover { color: white; border-color: white; }
 
-        #results-list { margin-top: 30px; display: grid; gap: 12px; }
+        #results-list { display: grid; gap: 12px; }
 
         .batch-item {
             background: #1e232b;
@@ -117,21 +129,10 @@
             animation: fadeIn 0.4s ease forwards;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .thumb {
-            width: 50px;
-            height: 50px;
-            border-radius: 6px;
-            background: #000;
-            margin-right: 15px;
-            object-fit: cover;
-            border: 1px solid #444;
-        }
-
+        .thumb { width: 50px; height: 50px; border-radius: 6px; margin-right: 15px; object-fit: cover; border: 1px solid #444; }
         .file-info { flex-grow: 1; }
-        .file-name { display: block; font-size: 0.9rem; font-weight: 500; }
-        .file-meta { font-size: 0.75rem; color: #777; }
+        .file-name { display: block; font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; max-width: 250px; white-space: nowrap; }
+        .file-meta { font-size: 0.7rem; color: #666; }
 
         .download-btn {
             background: var(--success);
@@ -141,9 +142,7 @@
             border-radius: 8px;
             font-size: 0.8rem;
             font-weight: bold;
-            transition: opacity 0.2s;
         }
-        .download-btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -155,10 +154,12 @@
     <div class="tool-card">
         <div class="settings-grid">
             <div>
-                <label>Face Resolution: <span id="resVal" class="res-display">1024</span>px</label>
-                <input type="range" id="resSlider" min="7" max="12" step="1" value="10">
+                <label>Face Resolution (Powers of 2)</label>
+                <div class="res-input-wrapper">
+                    <input type="number" id="resInput" value="1024" step="512">
+                </div>
             </div>
-            <div style="display: flex; align-items: flex-end; padding-bottom: 5px;">
+            <div style="display: flex; align-items: flex-end;">
                 <label class="checkbox-group">
                     <input type="checkbox" id="stitchCheck" checked>
                     Stitch into Cross
@@ -178,24 +179,50 @@
         </button>
     </div>
 
+    <div class="header-action">
+        <label>Recent History</label>
+        <button class="clear-btn" id="clearBtn">Clear History</button>
+    </div>
     <div id="results-list"></div>
 </div>
 
 <script>
 const facesOrder = ["posx", "negx", "posy", "negy", "posz", "negz"];
-const slider = document.getElementById('resSlider');
-const resVal = document.getElementById('resVal');
+const resInput = document.getElementById('resInput');
 const panoInput = document.getElementById('panoInput');
 
-// Power of two logic
-slider.oninput = () => {
-    resVal.innerText = Math.pow(2, slider.value);
-};
+// Power of Two Snap Logic
+function snapToPowerOfTwo(value) {
+    if (value < 1) return 1;
+    return Math.pow(2, Math.round(Math.log2(value)));
+}
+
+resInput.addEventListener('change', (e) => {
+    const snapped = snapToPowerOfTwo(e.target.value);
+    resInput.value = snapped;
+});
+
+// Stepper adjustment
+resInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        resInput.value = parseInt(resInput.value) * 2;
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        resInput.value = Math.max(1, parseInt(resInput.value) / 2);
+    }
+});
 
 panoInput.onchange = () => {
     const count = panoInput.files.length;
     document.getElementById('fileCount').innerText = count > 0 ? `${count} files selected` : "No files selected";
 };
+
+document.getElementById('clearBtn').onclick = () => {
+    document.getElementById('results-list').innerHTML = '';
+};
+
+// ... [directionToUV and generateFace functions remain identical to previous version] ...
 
 function directionToUV(x, y, z) {
     const theta = Math.atan2(z, x);
@@ -277,7 +304,7 @@ async function processFile(file, size, shouldStitch) {
 
 document.getElementById("generateBtn").onclick = async () => {
     const files = panoInput.files;
-    const size = Math.pow(2, slider.value);
+    const size = parseInt(resInput.value);
     const shouldStitch = document.getElementById("stitchCheck").checked;
     const resultsList = document.getElementById("results-list");
     const btn = document.getElementById("generateBtn");
@@ -292,21 +319,17 @@ document.getElementById("generateBtn").onclick = async () => {
         const result = await processFile(file, size, shouldStitch);
         const item = document.createElement("div");
         item.className = "batch-item";
-        
         const previewSrc = result.type === 'single' ? result.data : result.preview;
-        const dlLabel = result.type === 'single' ? 'Download PNG' : 'Download ZIP';
-
         item.innerHTML = `
             <img src="${previewSrc}" class="thumb">
             <div class="file-info">
                 <span class="file-name">${file.name}</span>
-                <span class="file-meta">${size}px faces • ${shouldStitch ? 'Stitched' : 'Individual'}</span>
+                <span class="file-meta">${size}px • ${shouldStitch ? 'Stitched' : 'Zip (6 Faces)'}</span>
             </div>
-            <a href="${result.data}" download="${shouldStitch ? 'cubemap_'+file.name : 'faces_'+file.name+'.zip'}" class="download-btn">${dlLabel}</a>
+            <a href="${result.data}" download="${shouldStitch ? 'cubemap_'+file.name : 'faces_'+file.name+'.zip'}" class="download-btn">Download</a>
         `;
         resultsList.prepend(item);
     }
-
     btn.disabled = false;
     loader.style.display = "none";
 };
