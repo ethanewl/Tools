@@ -19,9 +19,22 @@ function directionToUV(x, y, z) {
 
 function generateFace(panoData, pw, ph, size, face) {
   const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
+  if (!canvas) {
+    console.error("Failed to create canvas element");
+    return;
+  }
+  
+  canvas.width = size;
+  canvas.height = size;
+
   const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.error("Failed to get 2D context. Resolution might be too high.");
+    return;
+  }
+
   const img = ctx.createImageData(size, size);
+
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
