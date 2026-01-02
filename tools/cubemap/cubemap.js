@@ -18,27 +18,29 @@ function directionToUV(x, y, z) {
 // -------------------------
 
 function generateFace(panoData, pw, ph, size, face) {
-  const canvas = document.createElement("canvas");
-  if (!canvas) {
-    console.error("Failed to create canvas element");
-    return;
-  }
+  // 1. Create the element
+  const faceCanvas = document.createElement("canvas");
   
-  canvas.width = size;
-  canvas.height = size;
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    console.error("Failed to get 2D context. Resolution might be too high.");
-    return;
+  // 2. Safety Check: Ensure canvas exists
+  if (!faceCanvas) {
+    console.error("Canvas creation failed");
+    return null;
   }
 
-  const img = ctx.createImageData(size, size);
+  // 3. Set dimensions individually
+  faceCanvas.width = size;
+  faceCanvas.height = size;
 
+  const ctx = faceCanvas.getContext("2d");
+  if (!ctx) {
+    console.error("Could not get 2D context");
+    return null;
+  }
+
+  const imgData = ctx.createImageData(size, size);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-
       const a = 2 * (x + 0.5) / size - 1;
       const b = 2 * (y + 0.5) / size - 1;
 
@@ -51,9 +53,7 @@ function generateFace(panoData, pw, ph, size, face) {
       if (face === "negz") [dx, dy, dz] = [-a, -b, -1];
 
       const len = Math.hypot(dx, dy, dz);
-      dx /= len;
-      dy /= len;
-      dz /= len;
+      dx /= len; dy /= len; dz /= len;
 
       const [u, v] = directionToUV(dx, dy, dz);
 
@@ -62,15 +62,15 @@ function generateFace(panoData, pw, ph, size, face) {
       const panoIndex = (py * pw + px) * 4;
 
       const i = (y * size + x) * 4;
-      img.data[i]     = panoData[panoIndex];
-      img.data[i + 1] = panoData[panoIndex + 1];
-      img.data[i + 2] = panoData[panoIndex + 2];
-      img.data[i + 3] = 255;
+      imgData.data[i]     = panoData[panoIndex];
+      imgData.data[i + 1] = panoData[panoIndex + 1];
+      imgData.data[i + 2] = panoData[panoIndex + 2];
+      imgData.data[i + 3] = 255;
     }
   }
 
-  ctx.putImageData(img, 0, 0);
-  return canvas;
+  ctx.putImageData(imgData, 0, 0);
+  return faceCanvas;
 }
 
 // -------------------------
