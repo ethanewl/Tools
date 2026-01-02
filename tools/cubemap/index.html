@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stellar Cubemap Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --bg: #0f1115;
@@ -11,10 +12,11 @@
             --accent: #3b82f6;
             --success: #10b981;
             --text: #ececec;
+            --border: #333;
         }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -24,105 +26,156 @@
             margin: 0;
         }
 
-        .container { max-width: 800px; width: 100%; }
+        .container { max-width: 700px; width: 100%; }
 
-        h1 { font-weight: 800; letter-spacing: -1px; margin-bottom: 5px; }
-        p.subtitle { color: #9ca3af; margin-bottom: 30px; }
+        h1 { font-weight: 800; letter-spacing: -1px; margin-bottom: 5px; text-align: center; }
+        p.subtitle { color: #9ca3af; margin-bottom: 30px; text-align: center; font-size: 0.9rem; }
 
         .tool-card {
             background: var(--card);
-            padding: 30px;
+            padding: 24px;
             border-radius: 16px;
-            border: 1px solid #333;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
         }
 
-        .input-group {
-            display: flex;
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
-            align-items: flex-end;
             margin-bottom: 25px;
         }
 
-        label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 5px; font-weight: bold; }
+        label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05rem; }
 
-        input[type="number"] {
-            background: #0f1115;
-            border: 1px solid #444;
-            color: white;
-            padding: 10px;
-            border-radius: 6px;
-            width: 100px;
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+        
+        .res-display { font-weight: bold; color: var(--accent); font-size: 1.1rem; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
         }
 
         #generateBtn {
+            width: 100%;
             background: var(--accent);
             color: white;
             border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
-            height: 42px;
+            transition: all 0.2s;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
+
+        #generateBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .file-upload {
             border: 2px dashed #444;
-            padding: 40px;
+            padding: 30px;
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
+            background: rgba(0,0,0,0.2);
         }
 
-        .file-upload:hover { border-color: var(--accent); background: #20252e; }
+        .file-upload:hover { border-color: var(--accent); background: rgba(59, 130, 246, 0.05); }
 
-        #results-list {
-            margin-top: 30px;
-            display: grid;
-            gap: 12px;
-        }
+        #results-list { margin-top: 30px; display: grid; gap: 12px; }
 
         .batch-item {
-            background: #252a33;
-            padding: 15px 20px;
-            border-radius: 10px;
+            background: #1e232b;
+            padding: 12px;
+            border-radius: 12px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border: 1px solid #333;
+            border: 1px solid var(--border);
+            animation: fadeIn 0.4s ease forwards;
         }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            background: #000;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 1px solid #444;
+        }
+
+        .file-info { flex-grow: 1; }
+        .file-name { display: block; font-size: 0.9rem; font-weight: 500; }
+        .file-meta { font-size: 0.75rem; color: #777; }
 
         .download-btn {
             background: var(--success);
             text-decoration: none;
             color: white;
             padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
             font-weight: bold;
+            transition: opacity 0.2s;
         }
+        .download-btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Stellar Cubemap Studio</h1>
-    <p class="subtitle">Convert panoramas to Unity-style horizontal cross cubemaps.</p>
+    <p class="subtitle">Equirectangular to Unity Cubemap Converter</p>
 
     <div class="tool-card">
-        <div class="input-group">
+        <div class="settings-grid">
             <div>
-                <label>FACE RESOLUTION</label>
-                <input type="number" id="resInput" value="1024">
+                <label>Face Resolution: <span id="resVal" class="res-display">1024</span>px</label>
+                <input type="range" id="resSlider" min="7" max="12" step="1" value="10">
             </div>
-            <button id="generateBtn">Process Batch</button>
+            <div style="display: flex; align-items: flex-end; padding-bottom: 5px;">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="stitchCheck" checked>
+                    Stitch into Cross
+                </label>
+            </div>
         </div>
 
         <div class="file-upload" onclick="document.getElementById('panoInput').click()">
-            <strong style="color: var(--accent)">Click to upload</strong> or drag panoramas here
+            <span style="color: var(--accent); font-weight: bold;">Choose Panoramas</span> or drag & drop
             <input type="file" id="panoInput" accept="image/*" multiple style="display:none">
+            <div id="fileCount" style="font-size: 0.75rem; color: #666; margin-top: 5px;">No files selected</div>
         </div>
+
+        <button id="generateBtn">
+            <div class="spinner" id="loader"></div>
+            <span id="btnText">Process Batch</span>
+        </button>
     </div>
 
     <div id="results-list"></div>
@@ -130,6 +183,19 @@
 
 <script>
 const facesOrder = ["posx", "negx", "posy", "negy", "posz", "negz"];
+const slider = document.getElementById('resSlider');
+const resVal = document.getElementById('resVal');
+const panoInput = document.getElementById('panoInput');
+
+// Power of two logic
+slider.oninput = () => {
+    resVal.innerText = Math.pow(2, slider.value);
+};
+
+panoInput.onchange = () => {
+    const count = panoInput.files.length;
+    document.getElementById('fileCount').innerText = count > 0 ? `${count} files selected` : "No files selected";
+};
 
 function directionToUV(x, y, z) {
     const theta = Math.atan2(z, x);
@@ -171,10 +237,10 @@ function generateFace(panoData, pw, ph, size, face) {
     return canvas;
 }
 
-async function processFile(file, size) {
+async function processFile(file, size, shouldStitch) {
     return new Promise((resolve) => {
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
             const tempCanvas = document.createElement("canvas");
             tempCanvas.width = img.width; tempCanvas.height = img.height;
             const tempCtx = tempCanvas.getContext("2d");
@@ -184,36 +250,65 @@ async function processFile(file, size) {
             const faces = {};
             facesOrder.forEach(f => faces[f] = generateFace(panoData, img.width, img.height, size, f));
 
-            const cross = document.createElement("canvas");
-            cross.width = size * 4; cross.height = size * 3;
-            const cctx = cross.getContext("2d");
-            cctx.drawImage(faces["posy"], size, 0);
-            cctx.drawImage(faces["negx"], 0, size);
-            cctx.drawImage(faces["posz"], size, size);
-            cctx.drawImage(faces["posx"], size * 2, size);
-            cctx.drawImage(faces["negz"], size * 3, size);
-            cctx.drawImage(faces["negy"], size, size * 2);
-
-            resolve(cross.toDataURL("image/png"));
+            if (shouldStitch) {
+                const cross = document.createElement("canvas");
+                cross.width = size * 4; cross.height = size * 3;
+                const cctx = cross.getContext("2d");
+                cctx.drawImage(faces["posy"], size, 0);
+                cctx.drawImage(faces["negx"], 0, size);
+                cctx.drawImage(faces["posz"], size, size);
+                cctx.drawImage(faces["posx"], size * 2, size);
+                cctx.drawImage(faces["negz"], size * 3, size);
+                cctx.drawImage(faces["negy"], size, size * 2);
+                resolve({ type: 'single', data: cross.toDataURL("image/png") });
+            } else {
+                const zip = new JSZip();
+                for (let f of facesOrder) {
+                    const data = faces[f].toDataURL("image/png").split(',')[1];
+                    zip.file(`${f}.png`, data, {base64: true});
+                }
+                const content = await zip.generateAsync({type:"blob"});
+                resolve({ type: 'zip', data: URL.createObjectURL(content), preview: faces["posz"].toDataURL("image/png") });
+            }
         };
         img.src = URL.createObjectURL(file);
     });
 }
 
 document.getElementById("generateBtn").onclick = async () => {
-    const files = document.getElementById("panoInput").files;
-    const size = parseInt(document.getElementById("resInput").value);
+    const files = panoInput.files;
+    const size = Math.pow(2, slider.value);
+    const shouldStitch = document.getElementById("stitchCheck").checked;
     const resultsList = document.getElementById("results-list");
+    const btn = document.getElementById("generateBtn");
+    const loader = document.getElementById("loader");
 
     if (!files.length) return alert("Select images first");
 
+    btn.disabled = true;
+    loader.style.display = "block";
+
     for (let file of files) {
-        const dataUrl = await processFile(file, size);
+        const result = await processFile(file, size, shouldStitch);
         const item = document.createElement("div");
         item.className = "batch-item";
-        item.innerHTML = `<span>${file.name}</span><a href="${dataUrl}" download="cubemap_${file.name}" class="download-btn">Download PNG</a>`;
-        resultsList.appendChild(item);
+        
+        const previewSrc = result.type === 'single' ? result.data : result.preview;
+        const dlLabel = result.type === 'single' ? 'Download PNG' : 'Download ZIP';
+
+        item.innerHTML = `
+            <img src="${previewSrc}" class="thumb">
+            <div class="file-info">
+                <span class="file-name">${file.name}</span>
+                <span class="file-meta">${size}px faces • ${shouldStitch ? 'Stitched' : 'Individual'}</span>
+            </div>
+            <a href="${result.data}" download="${shouldStitch ? 'cubemap_'+file.name : 'faces_'+file.name+'.zip'}" class="download-btn">${dlLabel}</a>
+        `;
+        resultsList.prepend(item);
     }
+
+    btn.disabled = false;
+    loader.style.display = "none";
 };
 </script>
 </body>
