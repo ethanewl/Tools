@@ -1,12 +1,12 @@
 # Tools
 tools I have made over the years
 
+https://ethanewl.github.io/Tools/
+
 
 **Pano to cubemap converter**
 
 Browser-based utility for converting 2:1 Equirectangular Panoramas into Unity-ready Cubemap Horizontal Crosses or individual face sets.
-
-https://ethanewl.github.io/Tools/tools/cubemap/
 
 ### Key Features
 
