@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ethan – Utility Tools</title>
+
   <style>
     :root {
       --bg: #0f1115;
@@ -13,6 +14,7 @@
       --text-dim: #9ca3af;
       --border: #333;
     }
+
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: var(--bg);
@@ -23,113 +25,169 @@
       padding: 80px 20px;
       margin: 0;
     }
+
     .header {
       text-align: center;
-      margin-bottom: 50px;
+      margin-bottom: 60px;
     }
+
     h1 {
-      font-size: 2.5rem;
+      font-size: 2.6rem;
       font-weight: 800;
       letter-spacing: -0.05rem;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
+
     .subtitle {
       color: var(--text-dim);
       font-size: 1.1rem;
     }
+
+    /* Category Section */
+    .category {
+      width: 100%;
+      max-width: 1000px;
+      margin-bottom: 60px;
+    }
+
+    .category-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-title span {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
     /* Tools Grid */
     .tools-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 24px;
-      width: 100%;
-      max-width: 900px;
     }
+
     .tool-card {
       background: var(--card);
       padding: 32px;
       border: 1px solid var(--border);
       border-radius: 20px;
-      transition: all 0.3s ease;
+      transition: all 0.25s ease;
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       text-decoration: none;
       color: inherit;
-      cursor: pointer;
     }
+
     .tool-card:hover {
       border-color: var(--accent);
       transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
-    /* Subtle glow effect on hover */
+
     .tool-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent);
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(59,130,246,0.1), transparent);
       opacity: 0;
       transition: opacity 0.3s ease;
     }
+
     .tool-card:hover::before {
       opacity: 1;
     }
+
     h2 {
-      font-size: 1.5rem;
-      margin: 0 0 12px 0;
+      font-size: 1.45rem;
+      margin: 0 0 12px;
       font-weight: 700;
-      position: relative;
       z-index: 1;
     }
+
     p {
       color: var(--text-dim);
       line-height: 1.6;
-      margin: 0 0 24px 0;
-      position: relative;
+      margin: 0 0 24px;
       z-index: 1;
     }
+
     .btn {
       margin-top: auto;
-      display: inline-flex;
-      align-items: center;
       color: var(--accent);
       font-weight: 600;
       text-decoration: none;
-      transition: gap 0.2s;
-      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       z-index: 1;
+      transition: gap 0.2s;
     }
+
     .tool-card:hover .btn {
       gap: 8px;
     }
-    .btn::after {
-      content: '→';
-      margin-left: 4px;
-    }
   </style>
 </head>
+
 <body>
+
   <div class="header">
     <h1>Utility Belt</h1>
+    <div class="subtitle">Focused tools for graphics workflows & engineering learning</div>
   </div>
-  <div class="tools-grid">
-    <a href="./tools/cubemap/" class="tool-card">
-      <h2>Cubemap Conversion</h2>
-      <p>Convert 2:1 equirectangular panoramas into Unity-ready horizontal cross cubemaps or individual faces.</p>
-      <span class="btn">Launch Tool</span>
-    </a>
-    <a href="./tools/color-palette/" class="tool-card">
-      <h2>Color Palette Extractor</h2>
-      <p>Extract dominant colors from images for game & design references with HEX, RGB, and HSL formats.</p>
-      <span class="btn">Launch Tool</span>
-    </a>
-    <a href="./tools/resistor-colours-coding/" class="tool-card">
-      <h2>Resistor Colours Coding</h2>
-      <p>Calculate resistor values based on color bands for electronics projects and prototyping.</p>
-      <span class="btn">Launch Tool</span>
-    </a>
-  </div>
+
+  <!-- GRAPHICS TOOLS -->
+  <section class="category">
+    <div class="category-title">
+        Graphics Tools
+      <span>Production-ready utilities</span>
+    </div>
+
+    <div class="tools-grid">
+      <a href="./tools/cubemap/" class="tool-card">
+        <h2>Cubemap Conversion</h2>
+        <p>Convert 2:1 equirectangular panoramas into Unity-ready cubemaps or individual faces.</p>
+        <span class="btn">Launch Tool →</span>
+      </a>
+
+      <a href="./tools/color-palette/" class="tool-card">
+        <h2>Color Palette Extractor</h2>
+        <p>Extract dominant colors from images with HEX, RGB, and HSL formats.</p>
+        <span class="btn">Launch Tool →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ENGINEERING TOOLS -->
+  <section class="category">
+    <div class="category-title">
+        Engineering Tools
+      <span>Educational & standards-aware</span>
+    </div>
+
+    <div class="tools-grid">
+      <a href="./tools/resistor-colours-coding/" class="tool-card">
+        <h2>Resistor Colour Codes</h2>
+        <p>Decode and encode resistor values using standard colour bands with tolerance awareness.</p>
+        <span class="btn">Launch Tool →</span>
+      </a>
+    </div>
+    <div class="tools-grid">
+      <a href="./tools/ohms-law/" class="tool-card">
+        <h2>Ohm's Law Calculator</h2>
+        <p>Calculate voltage, current, or resistance using Ohm's Law with real-time updates.</p>
+        <span class="btn">Launch Tool →</span>
+      </a>
+    </div>
+  </section>
+
 </body>
 </html>

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohm's Law Calculator</title>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --card: #1a1d23;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --text: #ececec;
+            --border: #333;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 900px; width: 100%; }
+        
+        h1 {
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #9ca3af;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .tool-card {
+            background: var(--card);
+            padding: 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            margin-bottom: 24px;
+        }
+
+        .instruction {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--accent);
+        }
+
+        /* Calculator Grid */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            background: #0f1115;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .input-group.active {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .input-group.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .input-group.calculated {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .input-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .label-name {
+            font-size: 0.75rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05rem;
+        }
+
+        .label-symbol {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .value-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 1.8rem;
+            font-weight: 700;
+            padding: 8px;
+            outline: none;
+            text-align: right;
+        }
+
+        .value-input::placeholder {
+            color: #444;
+        }
+
+        .unit-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #444;
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Triangle Diagram */
+        .diagram-section {
+            background: #0f1115;
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .triangle-container {
+            position: relative;
+            width: 250px;
+            height: 220px;
+            margin: 20px 0;
+        }
+
+        .triangle {
+            width: 0;
+            height: 0;
+            border-left: 125px solid transparent;
+            border-right: 125px solid transparent;
+            border-bottom: 220px solid rgba(59, 130, 246, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .triangle-border {
+            width: 0;
+            height: 0;
+            border-left: 125px solid transparent;
+            border-right: 125px solid transparent;
+            border-bottom: 220px solid var(--accent);
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            opacity: 0.5;
+        }
+
+        .triangle-label {
+            position: absolute;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .label-v { top: -10px; left: 50%; transform: translateX(-50%); }
+        .label-i { bottom: 10px; left: 20px; }
+        .label-r { bottom: 10px; right: 20px; }
+
+        .triangle-line {
+            position: absolute;
+            height: 2px;
+            background: #444;
+            left: 50%;
+            top: 50%;
+            width: 200px;
+            transform: translateX(-50%) translateY(-50%);
+        }
+
+        /* Formulas */
+        .formulas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .formula-box {
+            background: rgba(255,255,255,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+        }
+
+        .formula-box.active {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Results & Warnings */
+        .results-section {
+            background: #0f1115;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .warning-box.show {
+            display: block;
+        }
+
+        .warning-title {
+            font-weight: 700;
+            color: var(--warning);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warning-text {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .power-ratings {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .rating-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+            color: #666;
+        }
+
+        .rating-badge.safe {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .rating-badge.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .rating-badge.danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-clear {
+            background: rgba(255,255,255,0.05);
+            color: #888;
+            border: 1px solid #444;
+        }
+
+        .btn-clear:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+
+        /* Reference */
+        .reference {
+            background: #0f1115;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 24px;
+        }
+
+        .ref-title {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .ref-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .ref-item {
+            background: rgba(255,255,255,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .ref-formula {
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .ref-desc {
+            color: #666;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ Ohm's Law Calculator</h1>
+    <p class="subtitle">Enter any two values to calculate the others</p>
+
+    <div class="tool-card">
+        <div class="instruction">
+            Enter values in any TWO fields to calculate the remaining values
+        </div>
+
+        <div class="calc-grid">
+            <!-- Voltage -->
+            <div class="input-group" id="vGroup">
+                <div class="input-label">
+                    <span class="label-name">Voltage</span>
+                    <span class="label-symbol">V</span>
+                </div>
+                <div class="input-row">
+                    <input type="number" class="value-input" id="vInput" placeholder="0" step="any">
+                    <select class="unit-select" id="vUnit">
+                        <option value="1">V</option>
+                        <option value="0.001">mV</option>
+                        <option value="1000">kV</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Current -->
+            <div class="input-group" id="iGroup">
+                <div class="input-label">
+                    <span class="label-name">Current</span>
+                    <span class="label-symbol">I</span>
+                </div>
+                <div class="input-row">
+                    <input type="number" class="value-input" id="iInput" placeholder="0" step="any">
+                    <select class="unit-select" id="iUnit">
+                        <option value="1">A</option>
+                        <option value="0.001" selected>mA</option>
+                        <option value="0.000001">µA</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Resistance -->
+            <div class="input-group" id="rGroup">
+                <div class="input-label">
+                    <span class="label-name">Resistance</span>
+                    <span class="label-symbol">R</span>
+                </div>
+                <div class="input-row">
+                    <input type="number" class="value-input" id="rInput" placeholder="0" step="any">
+                    <select class="unit-select" id="rUnit">
+                        <option value="1">Ω</option>
+                        <option value="1000" selected>kΩ</option>
+                        <option value="1000000">MΩ</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Power -->
+            <div class="input-group" id="pGroup">
+                <div class="input-label">
+                    <span class="label-name">Power</span>
+                    <span class="label-symbol">P</span>
+                </div>
+                <div class="input-row">
+                    <input type="number" class="value-input" id="pInput" placeholder="0" step="any">
+                    <select class="unit-select" id="pUnit">
+                        <option value="1">W</option>
+                        <option value="0.001" selected>mW</option>
+                        <option value="1000">kW</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Triangle Diagram -->
+        <div class="diagram-section">
+            <h3 style="margin: 0 0 10px 0; color: #888; font-size: 0.9rem; text-transform: uppercase;">Ohm's Law Triangle</h3>
+            <div class="triangle-container">
+                <div class="triangle-border"></div>
+                <div class="triangle"></div>
+                <div class="triangle-line"></div>
+                <div class="triangle-label label-v">V</div>
+                <div class="triangle-label label-i">I</div>
+                <div class="triangle-label label-r">R</div>
+            </div>
+            <div class="formulas">
+                <div class="formula-box" id="formula1">V = I × R</div>
+                <div class="formula-box" id="formula2">I = V ÷ R</div>
+                <div class="formula-box" id="formula3">R = V ÷ I</div>
+                <div class="formula-box" id="formula4">P = V × I</div>
+            </div>
+        </div>
+
+        <!-- Warnings -->
+        <div class="results-section">
+            <div class="warning-box" id="powerWarning">
+                <div class="warning-title">
+                    <span>⚠️</span>
+                    <span>Power Dissipation Warning</span>
+                </div>
+                <div class="warning-text" id="warningText"></div>
+                <div class="power-ratings" id="powerRatings"></div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button class="btn btn-clear" id="clearBtn">Clear All</button>
+        </div>
+
+        <!-- Reference -->
+        <div class="reference">
+            <div class="ref-title">📐 Quick Reference</div>
+            <div class="ref-grid">
+                <div class="ref-item">
+                    <div class="ref-formula">P = V × I</div>
+                    <div class="ref-desc">Power = Voltage × Current</div>
+                </div>
+                <div class="ref-item">
+                    <div class="ref-formula">P = I² × R</div>
+                    <div class="ref-desc">Power = Current² × Resistance</div>
+                </div>
+                <div class="ref-item">
+                    <div class="ref-formula">P = V² ÷ R</div>
+                    <div class="ref-desc">Power = Voltage² ÷ Resistance</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const inputs = {
+    v: document.getElementById('vInput'),
+    i: document.getElementById('iInput'),
+    r: document.getElementById('rInput'),
+    p: document.getElementById('pInput')
+};
+
+const units = {
+    v: document.getElementById('vUnit'),
+    i: document.getElementById('iUnit'),
+    r: document.getElementById('rUnit'),
+    p: document.getElementById('pUnit')
+};
+
+const groups = {
+    v: document.getElementById('vGroup'),
+    i: document.getElementById('iGroup'),
+    r: document.getElementById('rGroup'),
+    p: document.getElementById('pGroup')
+};
+
+const powerRatings = [0.125, 0.25, 0.5, 1, 2, 5, 10]; // Watts
+
+function getBaseValue(key) {
+    const val = parseFloat(inputs[key].value);
+    const unit = parseFloat(units[key].value);
+    return isNaN(val) ? null : val * unit;
+}
+
+function setDisplayValue(key, baseValue) {
+    if (baseValue === null) return;
+    const unit = parseFloat(units[key].value);
+    inputs[key].value = (baseValue / unit).toFixed(6).replace(/\.?0+$/, '');
+}
+
+function countFilledInputs() {
+    return Object.keys(inputs).filter(k => getBaseValue(k) !== null).length;
+}
+
+function highlightFormula(...ids) {
+    document.querySelectorAll('.formula-box').forEach(box => box.classList.remove('active'));
+    ids.forEach(id => document.getElementById(id).classList.add('active'));
+}
+
+function calculate() {
+    const V = getBaseValue('v');
+    const I = getBaseValue('i');
+    const R = getBaseValue('r');
+    const P = getBaseValue('p');
+
+    const filled = countFilledInputs();
+
+    // Reset states
+    Object.values(groups).forEach(g => {
+        g.classList.remove('calculated', 'disabled');
+    });
+
+    if (filled === 0) {
+        highlightFormula();
+        updatePowerWarning(null);
+        return;
+    }
+
+    if (filled === 1) {
+        highlightFormula();
+        updatePowerWarning(null);
+        return;
+    }
+
+    // Calculate based on what's filled
+    let calculated = {};
+
+    // V and I known
+    if (V !== null && I !== null) {
+        calculated.r = V / I;
+        calculated.p = V * I;
+        highlightFormula('formula1', 'formula4');
+    }
+    // V and R known
+    else if (V !== null && R !== null) {
+        calculated.i = V / R;
+        calculated.p = (V * V) / R;
+        highlightFormula('formula2');
+    }
+    // V and P known
+    else if (V !== null && P !== null) {
+        calculated.i = P / V;
+        calculated.r = (V * V) / P;
+        highlightFormula('formula4');
+    }
+    // I and R known
+    else if (I !== null && R !== null) {
+        calculated.v = I * R;
+        calculated.p = I * I * R;
+        highlightFormula('formula1');
+    }
+    // I and P known
+    else if (I !== null && P !== null) {
+        calculated.v = P / I;
+        calculated.r = P / (I * I);
+        highlightFormula('formula4');
+    }
+    // R and P known
+    else if (R !== null && P !== null) {
+        calculated.v = Math.sqrt(P * R);
+        calculated.i = Math.sqrt(P / R);
+        highlightFormula();
+    }
+
+    // Set calculated values
+    Object.keys(calculated).forEach(key => {
+        setDisplayValue(key, calculated[key]);
+        groups[key].classList.add('calculated');
+    });
+
+    // Update power warning
+    const finalP = getBaseValue('p');
+    updatePowerWarning(finalP);
+}
+
+function updatePowerWarning(power) {
+    const warningBox = document.getElementById('powerWarning');
+    const warningText = document.getElementById('warningText');
+    const ratingsDiv = document.getElementById('powerRatings');
+
+    if (power === null || power <= 0) {
+        warningBox.classList.remove('show');
+        return;
+    }
+
+    warningBox.classList.add('show');
+    warningText.textContent = `Power dissipation: ${(power * 1000).toFixed(2)} mW (${power.toFixed(3)} W)`;
+
+    // Show ratings
+    ratingsDiv.innerHTML = '';
+    powerRatings.forEach(rating => {
+        const badge = document.createElement('div');
+        badge.className = 'rating-badge';
+        
+        if (power <= rating * 0.5) {
+            badge.classList.add('safe');
+        } else if (power <= rating * 0.8) {
+            badge.classList.add('warning');
+        } else if (power > rating) {
+            badge.classList.add('danger');
+        }
+        
+        badge.textContent = rating >= 1 ? `${rating}W` : `${rating * 1000}mW`;
+        ratingsDiv.appendChild(badge);
+    });
+}
+
+// Event listeners
+Object.values(inputs).forEach(input => {
+    input.addEventListener('input', calculate);
+});
+
+Object.values(units).forEach(unit => {
+    unit.addEventListener('change', calculate);
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+    Object.values(inputs).forEach(input => input.value = '');
+    calculate();
+});
+
+// Initial state
+calculate();
+</script>
+
+</body>
+</html>
