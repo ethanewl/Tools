@@ -70,8 +70,10 @@
         /* Calculator Grid */
         .calc-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+            width: 100%;
         }
 
         .input-group {
@@ -80,6 +82,7 @@
             border-radius: 12px;
             border: 2px solid var(--border);
             transition: all 0.2s;
+            min-width: 0;
         }
 
         .input-group.active {
